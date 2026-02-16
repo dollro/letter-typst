@@ -30,8 +30,8 @@
 #
 # ── REQUIRED FONTS ───────────────────────────────────────────
 #
-# Styrene B (headings/UI text), Tiempos Text (narrative body).
-# Fallbacks: Source Sans 3, Source Serif 4. Fonts must be
+# Source Sans 3 (headings/body text), Source Serif 4 (narrative).
+# OTF files are bundled in example/fonts/. Fonts must be
 # installed in the build environment.
 #
 # ==========================================================

@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Re-fetch tags (actions/checkout overwrites annotated tags)
+        run: git fetch origin --tags --force
+
+      - name: Check tag is annotated
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if git cat-file -t "refs/tags/$TAG" 2>/dev/null | grep -q "^tag$"; then
+            echo "Annotated tag: $TAG — proceeding with release"
+          else
+            echo "Lightweight tag: $TAG — skipping release"
+            echo "SKIP=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Validate tag matches typst.toml version
+        if: env.SKIP != 'true'
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          TOML_VERSION=$(grep '^version' typst.toml | sed 's/.*"\(.*\)"/\1/')
+          if [ "$TOML_VERSION" != "$TAG" ]; then
+            echo "ERROR: Tag $TAG does not match typst.toml version $TOML_VERSION"
+            exit 1
+          fi
+
+      - name: Build archive
+        if: env.SKIP != 'true'
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          ARCHIVE="/tmp/letter-typst-${TAG}.tar.gz"
+          tar czf "$ARCHIVE" \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.claude' \
+            --exclude='CLAUDE.md' \
+            --exclude='.gitignore' \
+            --exclude='example' \
+            .
+          echo "Created $ARCHIVE"
+          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        if: env.SKIP != 'true'
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          gh release create "$TAG" "$ARCHIVE" \
+            --title "letter-typst v${TAG}" \
+            --notes "Release v${TAG}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
