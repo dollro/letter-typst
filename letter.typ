@@ -6,15 +6,21 @@
 #import "_letter-components.typ": letter-formats, letter-marks, letter-sender-box, letter-header-simple
 
 #let cover-letter-page(
-  data,
+  author,
+  recipient,
+  body-content,
+  language: "en",
+  date: none,
+  subject: none,
+  salutation: auto,
+  closing: auto,
+  enclosures: none,
   start-page: 1,
   total-pages: none,
   get-string: none,
   signature-image: none,
 ) = {
-  let lang = data.at("language", default: "en")
-  let author = data.author
-  let cl = data.cover_letter
+  let lang = language
   let fmt = letter-format  // from styles.typ
 
   // Build author full name
@@ -118,11 +124,10 @@
               set text(size: letter-recipient-size, font: letter-body-font)
               set align(top)
               pad(left: letter-address-pad-left, {
-                let recip = cl.recipient
-                if "company" in recip { strong(recip.company); linebreak() }
-                if "name" in recip { recip.name; linebreak() }
-                if "address" in recip { recip.address; linebreak() }
-                if "city" in recip { recip.city }
+                if "company" in recipient { strong(recipient.company); linebreak() }
+                if "name" in recipient { recipient.name; linebreak() }
+                if "address" in recipient { recipient.address; linebreak() }
+                if "city" in recipient { recipient.city }
               })
             },
           )
@@ -131,11 +136,10 @@
           set text(size: letter-recipient-size, font: letter-body-font)
           set align(top)
           pad(left: letter-address-pad-left, {
-            let recip = cl.recipient
-            if "company" in recip { strong(recip.company); linebreak() }
-            if "name" in recip { recip.name; linebreak() }
-            if "address" in recip { recip.address; linebreak() }
-            if "city" in recip { recip.city }
+            if "company" in recipient { strong(recipient.company); linebreak() }
+            if "name" in recipient { recipient.name; linebreak() }
+            if "address" in recipient { recipient.address; linebreak() }
+            if "city" in recipient { recipient.city }
           })
         }
       }),
@@ -147,36 +151,31 @@
   // -- Body content -------------------------------------------
 
   // Date (right-aligned)
-  if "date" in data {
-    align(right, text(size: letter-recipient-size, data.date))
+  if date != none {
+    align(right, text(size: letter-recipient-size, date))
     v(letter-date-gap)
   }
 
   // Subject line (bold)
-  if "subject" in cl {
+  if subject != none {
     v(letter-subject-before)
-    text(weight: "bold", size: letter-subject-size, cl.subject)
+    text(weight: "bold", size: letter-subject-size, subject)
     v(letter-subject-after)
   }
 
-  // Salutation + body paragraphs — narrative font (Tiempos Text)
+  // Salutation + body paragraphs — narrative font
   {
     set text(font: letter-narrative-font, size: letter-narrative-size)
     set par(leading: letter-narrative-leading, spacing: letter-narrative-par-spacing)
 
     {
-      cl.at("salutation", default: get-string(lang, "letter-salutation-default"))
+      let sal = if salutation == auto { get-string(lang, "letter-salutation-default") } else { salutation }
+      sal
       v(letter-date-gap)
     }
 
-    for item in cl.body {
-      if type(item) == str {
-        item
-        parbreak()
-      } else if type(item) == dictionary and "bullets" in item {
-          pad(left: letter-body-bullet-indent,list(..item.bullets.map(b => [#b])))
-      }
-    }
+    // Body — native Typst content
+    body-content
   }
 
   // Closing + signature + author name
@@ -184,7 +183,8 @@
     set text(font: letter-narrative-font, size: letter-narrative-size)
 
     v(letter-closing-gap)
-    cl.at("closing", default: get-string(lang, "letter-closing-default"))
+    let cl = if closing == auto { get-string(lang, "letter-closing-default") } else { closing }
+    cl
   }
   {
     set text(font: letter-body-font, size: letter-narrative-size)
@@ -200,8 +200,8 @@
   }
 
   // Enclosures
-  if "enclosures" in cl {
+  if enclosures != none {
     v(letter-enclosures-gap)
-    text(weight: "bold", get-string(lang, "letter-enclosures-label") + ": ") + cl.enclosures
+    text(weight: "bold", get-string(lang, "letter-enclosures-label") + ": ") + enclosures
   }
 }

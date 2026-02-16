@@ -1,13 +1,14 @@
 # letter-typst
 
-A [Typst](https://typst.app) package for generating professional **DIN 5008** cover letters. All personal content is supplied via a YAML data dictionary — the package itself contains no personal data.
+A [Typst](https://typst.app) package for generating professional **DIN 5008** cover letters. All personal content is written directly in the `.typ` entry point using native Typst markup — the package itself contains no personal data.
 
 ## Features
 
 - DIN 5008 compliant layout (Format A and B)
 - Folding and hole marks for windowed envelopes
 - EN/DE localization with extensible TOML-based strings
-- Optional signature image, enclosures line, and bullet-point highlights
+- Native Typst markup in letter body (bold, italics, links, lists, etc.)
+- Optional signature image, enclosures line
 - Configurable design tokens (fonts, spacing, margins, toggles)
 
 ## Fonts
@@ -40,38 +41,50 @@ Edit `.env` if needed. The defaults work for local development — the package i
 - ..:/opt/typst-data/typst/packages/local/${LETTER_TYPST_NAME:-letter-typst}/${LETTER_TYPST_VERSION:-0.1.0}:ro
 ```
 
-### 2. Edit your letter data
+### 2. Write your letter
 
-All personal content lives in `letter-data.yaml`. Edit it to fill in your author info, recipient, letter body, and closing. See the included example for the full schema.
+All content lives directly in `letter.typ`. Edit the author/recipient dictionaries and write your letter body as native Typst markup:
 
-Key sections:
+```typst
+#import "@local/letter-typst:1.2.0": *
 
-```yaml
-language: "en"              # "en" or "de"
-date: "15.01.2026"
+#let author = (
+  title: "M.Sc.",
+  firstname: "Jane",
+  lastname: "Doe",
+  phone: "+49 123 4567890",
+  email: "jane.doe@example.com",
+  address: "Musterstr. 42",
+  city: "10115 Berlin, Germany",
+)
 
-author:
-  title: "M.Sc."
-  firstname: "Jane"
-  lastname: "Doe"
-  # phone, email, address, city ...
+#let recipient = (
+  company: "Acme Technologies GmbH",
+  name: "Human Resources",
+  address: "Technikstr. 10",
+  city: "80333 Munich",
+)
 
-cover_letter:
-  recipient:
-    company: "Acme Technologies GmbH"
-    # name, address, city ...
-  body:
-    - >-
-      First paragraph ...
-    - bullets:
-      - "Key strength 1"
-      - "Key strength 2"
-    - >-
-      Closing paragraph ...
-  closing: "Sincerely,"
+#cover-letter-page(
+  author,
+  recipient,
+  language: "en",
+  date: "15.01.2026",
+  get-string: get-string,
+  signature-image: image("images/signature.png"),
+)[
+  First paragraph with *bold* and _italic_ support...
+
+  Second paragraph...
+
+  - Key strength 1
+  - Key strength 2
+
+  Closing paragraph...
+]
 ```
 
-Images (e.g. signature) are referenced by path in the YAML and pre-loaded in the entry point file `letter.typ`.
+The body content block `[...]` supports full Typst markup — bold, italics, links, lists, and more.
 
 ### 3. Mount additional local resources (optional)
 
@@ -99,18 +112,14 @@ This runs `docker compose run --rm typst compile letter.typ` and produces `lette
 
 On the first run, Docker builds the image (compiles Typst from source, installs fonts). Subsequent runs reuse the cached image.
 
-### 5. Customise the entry point
+### 5. Customise further
 
-The entry point `letter.typ` is a thin wrapper that loads the YAML data, pre-loads images, and calls the package:
+Optional parameters:
 
-```typst
-#import "@local/letter-typst:0.1.0": *
-
-#let data = yaml("letter-data.yaml")
-#let signature-img = if "signature" in data { image(data.signature) }
-
-#cover-letter-page(data, get-string: get-string, signature-image: signature-img)
-```
+- `subject: "Application for ..."` — adds a bold subject line
+- `salutation: "Dear Hiring Manager,"` — overrides the localized default
+- `closing: "Best regards,"` — overrides the localized default
+- `enclosures: "Executive Summary, Profile"` — adds an enclosures line
 
 The `start-page` and `total-pages` CLI inputs let you control page numbering when the letter is part of a larger document.
 
@@ -124,8 +133,7 @@ _letter-components.typ      # Internal components (marks, sender box, etc.)
 styles-letter.typ           # Design tokens (DIN 5008 dimensions, fonts, spacing)
 lang-letter.toml            # Localization strings (EN/DE)
 example/
-  letter.typ                # Entry point — imports package, loads data
-  letter-data.yaml          # All personal content (author, recipient, body)
+  letter.typ                # Entry point — imports package, defines content
   fonts/                    # Bundled open-source OTF fonts
   images/                   # Signature, photo, etc.
   build.sh                  # One-command PDF build
@@ -140,7 +148,7 @@ Exported from `lib.typ`:
 
 | Function | Purpose |
 |---|---|
-| `cover-letter-page(data, start-page: 1, total-pages: none, get-string: none, signature-image: none)` | Render a DIN 5008 cover letter |
+| `cover-letter-page(author, recipient, body-content, language: "en", date: none, subject: none, salutation: auto, closing: auto, enclosures: none, start-page: 1, total-pages: none, get-string: none, signature-image: none)` | Render a DIN 5008 cover letter |
 | `get-string(lang, key)` | Localization string lookup |
 
 ## Releases
@@ -149,8 +157,8 @@ Releases are created automatically via GitHub Actions when an annotated semver t
 
 ```bash
 # After updating typst.toml version:
-git tag -a 1.1.0 -m "Release v1.1.0"
-git push origin 1.1.0
+git tag -a 1.2.0 -m "Release v1.2.0"
+git push origin 1.2.0
 ```
 
 The workflow validates that the tag matches the version in `typst.toml`, builds a distribution archive (excluding `example/`, `.github/`, and dev files), and publishes it as a GitHub Release with the tarball attached.
