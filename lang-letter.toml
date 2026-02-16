@@ -1,0 +1,19 @@
+[en]
+letter-enclosures-label = "Enclosures"
+letter-page-of = "Page"
+letter-page-of-separator = "of"
+letter-info-phone = "Phone"
+letter-info-email = "E-Mail"
+letter-closing-default = "Kind regards,"
+# Default salutation — overridable via cover_letter.salutation in YAML
+letter-salutation-default = "Dear Sir or Madam,"
+
+[de]
+letter-enclosures-label = "Anlagen"
+letter-page-of = "Seite"
+letter-page-of-separator = "von"
+letter-info-phone = "Telefon"
+letter-info-email = "E-Mail"
+letter-closing-default = "Mit freundlichen Grüßen"
+# Default salutation — overridable via cover_letter.salutation in YAML
+letter-salutation-default = "Sehr geehrte Damen und Herren,"

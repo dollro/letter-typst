@@ -1,0 +1,28 @@
+services:
+  typst:
+    build:
+      context: .
+      args:
+        - LETTER_TYPST_GL_BRANCH
+        - LETTER_TYPST_GL_HOST
+        - LETTER_TYPST_GL_PROJECT
+        - LETTER_TYPST_NAME
+        - LETTER_TYPST_VERSION
+        - TYPST_VERSION
+      secrets:
+        - LETTER_TYPST_GL_TOKEN
+    image: typst-letter:${TAG:-latest}
+    pull_policy: if_not_present
+    user: "1000:1000"
+    volumes:
+      - .:/work
+      # Uncomment to shadow the baked-in package with local source:
+      - ..:/opt/typst-data/typst/packages/local/${LETTER_TYPST_NAME:-letter-typst}/${LETTER_TYPST_VERSION:-0.1.0}:ro
+    working_dir: /work
+    environment:
+      - XDG_CACHE_HOME=/work/.typst-cache
+    entrypoint: ["typst"]
+
+secrets:
+  LETTER_TYPST_GL_TOKEN:
+    environment: LETTER_TYPST_GL_TOKEN

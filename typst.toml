@@ -1,0 +1,6 @@
+[package]
+name = "letter-typst"
+version = "0.1.0"
+entrypoint = "lib.typ"
+authors = ["Roland Doll (roland@dolltons.com)"]
+description = "Typst package for professional DIN 5008 cover letters"

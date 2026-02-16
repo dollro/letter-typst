@@ -1,0 +1,7 @@
+.typst-cache/
+.typst-data/
+.bash_history
+.env
+
+# Generated PDFs
+*.pdf
